@@ -10,6 +10,8 @@ namespace DiscordBotiha
 {
     public class MessagesService
     {
+        private const int messageDeletingDelay = 5000;
+
         private Dictionary<IGuild, List<IUserMessage>> messagesToDelete = new();
 
         private readonly EmbedBuilder error = new EmbedBuilder()
@@ -39,7 +41,7 @@ namespace DiscordBotiha
             return await channel.SendMessageAsync(String.Empty, false, embed.Build());
         }
 
-        public async Task<RestUserMessage> SendNowPlayingAsync(ISocketMessageChannel channel, LavaTrack track)
+        public async Task<RestUserMessage> SendNowPlayingTrackAsync(ISocketMessageChannel channel, LavaTrack track)
         {
             var message = await SendEmbedAsync(channel, $"**Сейчас играет: `{track.Title}`**\n{track.Url}", "музика ♪ ♫");
             await EnqueueDeletingMessage(message);
@@ -47,7 +49,7 @@ namespace DiscordBotiha
             return message;
         }
 
-        public async Task<RestUserMessage> SendEnqueuedAsync(ISocketMessageChannel channel, LavaTrack track)
+        public async Task<RestUserMessage> SendEnqueuedTrackAsync(ISocketMessageChannel channel, LavaTrack track)
         {
             var message = await SendEmbedAsync(channel, $"**Добавлен в очередь: `{track.Title}`**\n{track.Url}", "музика ♪ ♫");
             await EnqueueDeletingMessage(message);
@@ -72,6 +74,15 @@ namespace DiscordBotiha
                 await msg.DeleteAsync();
 
             messagesToDelete[guild].Clear();
+        }
+
+        public void InvokeDeleteMessage(IUserMessage message)
+        {
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(messageDeletingDelay);
+                await message.DeleteAsync();
+            });
         }
 
         public async Task EnqueueDeletingMessage(RestUserMessage message)

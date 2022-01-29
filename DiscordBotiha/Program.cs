@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace DiscordBotiha
 {
@@ -6,6 +7,6 @@ namespace DiscordBotiha
     {
         private static DiscordBot bot = new DiscordBot();
 
-        private static void Main() => bot.Start().GetAwaiter().GetResult();
+        private async static Task Main() => await bot.Start();
     }
 }

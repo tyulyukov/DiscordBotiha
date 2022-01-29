@@ -21,7 +21,7 @@ namespace DiscordBotiha
             }
             catch (Exception ex)
             {
-                ShowError(ex.Message);
+                Debug.Error(ex);
                 return false;
             }
         }
@@ -34,17 +34,9 @@ namespace DiscordBotiha
             }
             catch (Exception ex)
             {
-                ShowError(ex.Message);
+                Debug.Error(ex);
                 return null;
             }
-        }
-
-        private static void ShowError(String message)
-        {
-            ConsoleColor prevColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(message);
-            Console.ForegroundColor = prevColor;
         }
     }
 }
