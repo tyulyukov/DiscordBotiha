@@ -6,14 +6,28 @@ using Victoria;
 
 namespace DiscordBotiha
 {
-    public class VoiceService
+    public class VoiceService : Service
     {
-        public readonly MusicService Music;
-        
+        public static new VoiceService Instance
+        {
+            get
+            {
+                lock (locker)
+                    if (instance == null)
+                        instance = new VoiceService();
+
+                return instance;
+            }
+        }
+        private static VoiceService instance;
+
+        public static DiscordSocketClient Client;
+
         private LavaNode lavaNode;
         private MessagesService messagesService;
+        private MusicService musicService;
 
-        public VoiceService(DiscordSocketClient client, MessagesService messages)
+        private VoiceService()
         {
             LavaConfig cfg = new LavaConfig();
             cfg.SelfDeaf = true;
@@ -21,13 +35,14 @@ namespace DiscordBotiha
             cfg.Port = 2333;
             cfg.Authorization = "youshallnotpass";
 
-            lavaNode = new LavaNode(client, cfg);
+            lavaNode = new LavaNode(Client, cfg);
             lavaNode.OnTrackEnded += OnTrackEnded;
             lavaNode.OnLog += Log;
 
-            messagesService = messages;
+            MusicService.LavaNode = lavaNode;
+            musicService = ServicesCollection.GetService<MusicService>();
 
-            Music = new MusicService(lavaNode, this, messagesService);
+            messagesService = ServicesCollection.GetService<MessagesService>();
         }
 
         public async Task OnReadyAsync()
@@ -94,7 +109,7 @@ namespace DiscordBotiha
             try
             {
                 await DisconnectAsync(player);
-                Music.TrackLists.Remove(player);
+                musicService.TrackLists.Remove(player);
 
                 await messagesService.DeleteMessages(guild);
 
@@ -155,7 +170,7 @@ namespace DiscordBotiha
             if (!args.Reason.ShouldPlayNext())
                 return;
 
-            var nextTrack = Music.TrackLists[args.Player].Next();
+            var nextTrack = musicService.TrackLists[args.Player].Next();
 
             if (nextTrack == null)
                 return;

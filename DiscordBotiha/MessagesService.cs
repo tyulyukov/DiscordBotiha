@@ -8,17 +8,34 @@ using Victoria;
 
 namespace DiscordBotiha
 {
-    public class MessagesService
+    public class MessagesService : Service
     {
+        public static new MessagesService Instance { 
+            get
+            {
+                lock (locker)
+                    if (instance == null)
+                        instance = new MessagesService();
+
+                return instance;
+            }
+        }
+        private static MessagesService instance;
+
         private const int messageDeletingDelay = 5000;
 
-        private Dictionary<IGuild, List<IUserMessage>> messagesToDelete = new();
+        private Dictionary<IGuild, List<IUserMessage>> messagesToDelete;
 
         private readonly EmbedBuilder error = new EmbedBuilder()
         {
             Color = Color.Red,
             Title = "Произошла непредвиденная ошибка"
         };
+
+        private MessagesService()
+        {
+            messagesToDelete = new Dictionary<IGuild, List<IUserMessage>>();
+        }
 
         public async Task<RestUserMessage> SendEmbedAsync(ISocketMessageChannel channel, String description, String author = null, bool addThumbnail = false)
         {

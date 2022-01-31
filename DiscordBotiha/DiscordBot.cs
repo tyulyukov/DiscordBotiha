@@ -13,6 +13,7 @@ namespace DiscordBotiha
 
         private MessagesService messagesService;
         private VoiceService voiceService;
+        private MusicService musicService;
 
         private DiscordSocketClient client;
         private DiscordClientSettings settings;
@@ -26,14 +27,7 @@ namespace DiscordBotiha
             if (settings == null)
                 return;
 
-            client = new DiscordSocketClient();
-            client.MessageReceived += MessageHandle;
-            client.Log += Log;
-            
-            messagesService = new MessagesService();
-            voiceService = new VoiceService(client, messagesService);
-
-            client.Ready += voiceService.OnReadyAsync;
+            ConfigureServices();
 
             Console.ForegroundColor = ConsoleColor.White;
 
@@ -41,6 +35,25 @@ namespace DiscordBotiha
             await client.StartAsync();
 
             Console.ReadKey(false);
+        }
+
+        private void ConfigureServices()
+        {
+            client = new DiscordSocketClient();
+            client.MessageReceived += MessageHandle;
+            client.Log += Log;
+
+            ServicesCollection.AddSingleton(MessagesService.Instance);
+            messagesService = ServicesCollection.GetService<MessagesService>();
+
+            VoiceService.Client = client;
+            ServicesCollection.AddSingleton(VoiceService.Instance);
+            voiceService = ServicesCollection.GetService<VoiceService>();
+
+            ServicesCollection.AddSingleton(MusicService.Instance);
+            musicService = ServicesCollection.GetService<MusicService>();
+
+            client.Ready += voiceService.OnReadyAsync;
         }
 
         private Task Log(LogMessage log)
@@ -52,7 +65,7 @@ namespace DiscordBotiha
         private Task MessageHandle(SocketMessage message)
         {
             if (!IsMyMessage(message.Author))
-                Task.Run(async () => await CommandHandleAsync(message));
+                return Task.Run(async () => await CommandHandleAsync(message));
 
             return Task.CompletedTask;
         }
@@ -127,35 +140,35 @@ namespace DiscordBotiha
                 for (int i = 1; i < words.Length; i++)
                     searchQuery.Append(words[i] + ' ');
 
-                await voiceService.Music.Play(searchQuery.ToString(), command.Author as IVoiceState, command.Channel);
+                await musicService.Play(searchQuery.ToString(), command.Author as IVoiceState, command.Channel);
             }
             else if (commandWord == "skip" || commandWord == "next")
             {
-                await voiceService.Music.NextTrack(command.Author as IVoiceState, command.Channel);
+                await musicService.NextTrack(command.Author as IVoiceState, command.Channel);
             }
             else if (commandWord == "prev" || commandWord == "previous" || commandWord == "back")
             {
-                await voiceService.Music.PreviousTrack(command.Author as IVoiceState, command.Channel);
+                await musicService.PreviousTrack(command.Author as IVoiceState, command.Channel);
             }
             else if (commandWord == "pause" || commandWord == "stop")
             {
-                await voiceService.Music.Pause(command.Author as IVoiceState, command.Channel);
+                await musicService.Pause(command.Author as IVoiceState, command.Channel);
             }
             else if (commandWord == "resume" || commandWord == "unpause" || commandWord == "continue")
             {
-                await voiceService.Music.Resume(command.Author as IVoiceState, command.Channel);
+                await musicService.Resume(command.Author as IVoiceState, command.Channel);
             }
             else if (commandWord == "queue")
             {
-                await voiceService.Music.ShowQueue(command.Author as IVoiceState, command.Channel);
+                await musicService.ShowQueue(command.Author as IVoiceState, command.Channel);
             }
             else if (commandWord == "shuffle")
             {
-                await voiceService.Music.ShuffleQueue(command.Author as IVoiceState, command.Channel);
+                await musicService.ShuffleQueue(command.Author as IVoiceState, command.Channel);
             }
             else if (commandWord == "fullshuffle")
             {
-                await voiceService.Music.FullShuffleQueue(command.Author as IVoiceState, command.Channel);
+                await musicService.FullShuffleQueue(command.Author as IVoiceState, command.Channel);
             }
             else if (commandWord == "avatar")
             {

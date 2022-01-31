@@ -8,20 +8,33 @@ using Victoria.Enums;
 
 namespace DiscordBotiha
 {
-    public class MusicService
+    public class MusicService : Service
     {
+        public static new MusicService Instance
+        {
+            get
+            {
+                lock (locker)
+                    if (instance == null)
+                        instance = new MusicService();
+
+                return instance;
+            }
+        }
+        private static MusicService instance;
+
+        public static LavaNode LavaNode;
+
         public readonly Dictionary<LavaPlayer, TrackList> TrackLists;
 
-        private LavaNode lavaNode;
         private VoiceService voiceService;
         private MessagesService messagesService;
 
-        public MusicService(LavaNode lava, VoiceService voice, MessagesService messages)
+        private MusicService()
         {
             TrackLists = new Dictionary<LavaPlayer, TrackList>();
-            lavaNode = lava;
-            voiceService = voice;
-            messagesService = messages;
+            voiceService = ServicesCollection.GetService<VoiceService>();
+            messagesService = ServicesCollection.GetService<MessagesService>();
         }
 
         public async Task Play(String searchQuery, IVoiceState voiceState, ISocketMessageChannel channel)
@@ -31,7 +44,7 @@ namespace DiscordBotiha
 
             var guild = voiceState?.VoiceChannel?.Guild;
 
-            if (!lavaNode.HasPlayer(guild))
+            if (!LavaNode.HasPlayer(guild))
             {
                 if (voiceState?.VoiceChannel == null)
                 {
@@ -44,14 +57,14 @@ namespace DiscordBotiha
                 await voiceService.ConnectAsync(voiceState.VoiceChannel, channel as ITextChannel);
             }
 
-            var player = lavaNode.GetPlayer(guild);
+            var player = LavaNode.GetPlayer(guild);
 
             if (!await IsUserConnected(voiceState?.VoiceChannel, player.VoiceChannel, channel))
                 return;
 
             try
             {
-                var searchResponse = await lavaNode.SearchYouTubeAsync(searchQuery.ToString());
+                var searchResponse = await LavaNode.SearchYouTubeAsync(searchQuery.ToString());
 
                 if (searchResponse.LoadStatus == LoadStatus.LoadFailed || searchResponse.LoadStatus == LoadStatus.NoMatches)
                 {
@@ -93,7 +106,7 @@ namespace DiscordBotiha
             if (!await IsPlayerConnected(guild, channel))
                 return;
 
-            var player = lavaNode.GetPlayer(guild);
+            var player = LavaNode.GetPlayer(guild);
 
             if (!await IsUserConnected(voiceState?.VoiceChannel, player.VoiceChannel, channel))
                 return;
@@ -120,7 +133,7 @@ namespace DiscordBotiha
             if (!await IsPlayerConnected(guild, channel))
                 return;
 
-            var player = lavaNode.GetPlayer(guild);
+            var player = LavaNode.GetPlayer(guild);
 
             if (!await IsUserConnected(voiceState?.VoiceChannel, player.VoiceChannel, channel))
                 return;
@@ -147,7 +160,7 @@ namespace DiscordBotiha
             if (!await IsPlayerConnected(guild, channel))
                 return;
 
-            var player = lavaNode.GetPlayer(guild);
+            var player = LavaNode.GetPlayer(guild);
 
             if (!await IsUserConnected(voiceState?.VoiceChannel, player.VoiceChannel, channel))
                 return;
@@ -173,7 +186,7 @@ namespace DiscordBotiha
             if (!await IsPlayerConnected(guild, channel))
                 return;
 
-            var player = lavaNode.GetPlayer(guild);
+            var player = LavaNode.GetPlayer(guild);
 
             if (!await IsUserConnected(voiceState?.VoiceChannel, player.VoiceChannel, channel))
                 return;
@@ -199,7 +212,7 @@ namespace DiscordBotiha
             if (!await IsPlayerConnected(guild, channel))
                 return;
 
-            var player = lavaNode.GetPlayer(guild);
+            var player = LavaNode.GetPlayer(guild);
 
             if (!await IsUserConnected(voiceState?.VoiceChannel, player.VoiceChannel, channel))
                 return;
@@ -214,7 +227,7 @@ namespace DiscordBotiha
             if (!await IsPlayerConnected(guild, channel))
                 return;
 
-            var player = lavaNode.GetPlayer(guild);
+            var player = LavaNode.GetPlayer(guild);
 
             if (!await IsUserConnected(voiceState?.VoiceChannel, player.VoiceChannel, channel))
                 return;
@@ -237,7 +250,7 @@ namespace DiscordBotiha
             if (!await IsPlayerConnected(guild, channel))
                 return;
 
-            var player = lavaNode.GetPlayer(guild);
+            var player = LavaNode.GetPlayer(guild);
 
             if (!await IsUserConnected(voiceState?.VoiceChannel, player.VoiceChannel, channel))
                 return;
@@ -252,7 +265,7 @@ namespace DiscordBotiha
 
         private async Task<bool> IsPlayerConnected(IGuild guild, ISocketMessageChannel channel)
         {
-            if (!lavaNode.HasPlayer(guild))
+            if (!LavaNode.HasPlayer(guild))
             {
                 var message = await messagesService.SendEmbedAsync(channel, "**я не подключена к войсу дуринъ**");
                 messagesService.InvokeDeleteMessage(message);
